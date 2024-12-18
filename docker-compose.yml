@@ -1,0 +1,59 @@
+services:
+  zookeeper:
+    image: 'confluentinc/cp-zookeeper:7.0.1'
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "${ZOOKEEPER_FORWARD_PORT:-2181}:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+
+  kafka:
+    image: 'confluentinc/cp-kafka:7.0.1'
+    container_name: kafka
+    ports:
+      - "${KAFKA_FORWARD_PORT:-9092}:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_FORWARD_PORT:-9092}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "${KAFKA_UI_FORWARD_PORT:-8081}:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:${KAFKA_FORWARD_PORT:-9092}
+    volumes:
+      - kafka_ui_data:/var/lib/kafka-ui/data
+
+  app:
+    build:
+      dockerfile: Dockerfile
+    container_name: app
+    ports:
+      - "${APP_FORWARD_PORT:-8080}:8080"
+    depends_on:
+      - kafka
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:-kafka:${KAFKA_FORWARD_PORT:-9092}}
+      SPRING_KAFKA_CONSUMER_GROUP_ID: ${SPRING_KAFKA_CONSUMER_GROUP_ID:-my-group}
+      SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET: ${SPRING_KAFKA_CONSUMER_AUTO_OFFSET_RESET:-earliest}
+
+volumes:
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:
+  kafka_ui_data:
