@@ -16,7 +16,7 @@ public class KafkaProducerController {
     @ApiOperation(value = "Publish a message to a Kafka topic", notes = "Provide a topic and a message to publish to the Kafka topic")
     @PostMapping("/publish")
     public String sendMessage(
-            @ApiParam(value = "The topic to publish to", example = "input-topic", defaultValue = "input-topic") @RequestParam("topic") String topic,
+            @ApiParam(value = "The topic to publish to", example = "input-topic") @RequestParam(value = "topic", defaultValue = "input-topic") String topic,
             @ApiParam(value = "The message to publish", example = "{\"key\":\"value\"}") @RequestBody String message) {
         kafkaTemplate.send(topic, message);
         return "Message published to topic: " + topic;

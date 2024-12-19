@@ -7,7 +7,7 @@ springdoc:
     title: Kafka Consumer API
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: 172.17.0.1:9092
     consumer:
       group-id: my-group
       auto-offset-reset: earliest
